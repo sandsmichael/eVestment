@@ -276,7 +276,7 @@ ax3.set_xticklabels( ax3.get_xticklabels(), rotation=0, horizontalalignment='cen
 
 
 number_of_first_quartile_returns = df[[first_quartile_returns_column_mrq, first_quartile_returns_column_one_year, first_quartile_returns_column_three_year, first_quartile_returns_column_five_year]]#.sort_values(by = first_quartile_returns_column_one_year, ascending = False).iloc[:10]
-number_of_first_quartile_returns = number_of_first_quartile_returns[number_of_first_quartile_returns[first_quartile_returns_column_one_year] >= 8]
+number_of_first_quartile_returns = number_of_first_quartile_returns[number_of_first_quartile_returns[first_quartile_returns_column_one_year] >= 7]
 number_of_first_quartile_returns.columns = [c.split('(')[0].split(' - ')[1] for c in number_of_first_quartile_returns.columns]
 
 medians = number_of_first_quartile_returns.median()
@@ -315,9 +315,18 @@ monthly_returns = df[monthly_return_columns].T.iloc[::-1]
 
 
 
-
+plt.savefig("universe.png")
 plt.show()
 
+
+# sort by alpha beta stdev sharpe
+# data = df[excess_returns_columns + sharpe_columns]
+data = df[[excess_returns_column_three_year, sharpe_column_three_year]]
+data = data.sort_values(by = [excess_returns_column_three_year, sharpe_column_three_year], ascending = False)
+# melt = data.reset_index().melt(id_vars = 'Custom Name', var_name = 'Variable', value_name = 'Value')
+sns.scatterplot(data=data, x = excess_returns_column_three_year, y = sharpe_column_three_year)
+plt.show()
+print(data)
 
 
 """ 
