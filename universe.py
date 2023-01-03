@@ -118,13 +118,18 @@ excess_returns_columns = [c for c in df.columns if 'Excess Returns - ' in c and 
 excess_returns_column_mrq = [c for c in excess_returns_columns if 'MRQ' in c][0]
 excess_returns_column_one_year = [c for c in excess_returns_columns if '1 Year' in c][0]
 excess_returns_column_three_year = [c for c in excess_returns_columns if '3 Year' in c][0]
+excess_returns_column_five_year = [c for c in excess_returns_columns if '5 Year' in c][0]
+
+
 monthly_return_columns = [ c for c in df.columns if 'Returns - ' in c and 'in' not in c ][-36:]
+
 
 
 sharpe_columns = [ c for c in df.columns if 'Sharpe Ratio' in c]
 sharpe_column_mrq = [c for c in sharpe_columns if 'MRQ' in c][0]
 sharpe_column_one_year = [c for c in sharpe_columns if '1 Year' in c][0]
 sharpe_column_three_year = [c for c in sharpe_columns if '3 Year' in c][0]
+sharpe_column_five_year = [c for c in sharpe_columns if '5 Year' in c][0]
 
 """ 
   ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -315,18 +320,20 @@ monthly_returns = df[monthly_return_columns].T.iloc[::-1]
 
 
 
-plt.savefig("universe.png")
+plt.savefig("trailing returns.png")
 plt.show()
 
 
 # sort by alpha beta stdev sharpe
 # data = df[excess_returns_columns + sharpe_columns]
-data = df[[excess_returns_column_three_year, sharpe_column_three_year]]
-data = data.sort_values(by = [excess_returns_column_three_year, sharpe_column_three_year], ascending = False)
+# data = df[[excess_returns_column_mrq, excess_returns_column_one_year, excess_returns_column_three_year, excess_returns_column_five_year, sharpe_column_mrq, sharpe_column_one_year, sharpe_column_three_year, sharpe_column_five_year]]
+# data = data.sort_values(by = [excess_returns_column_three_year, sharpe_column_three_year], ascending = False)
+# data.columns = [c.split(' using ')[0] for c in data.columns]
+
 # melt = data.reset_index().melt(id_vars = 'Custom Name', var_name = 'Variable', value_name = 'Value')
-sns.scatterplot(data=data, x = excess_returns_column_three_year, y = sharpe_column_three_year)
-plt.show()
-print(data)
+# sns.scatterplot(data=data, x = excess_returns_column_three_year, y = sharpe_column_three_year)
+# plt.show()
+# print(data)
 
 
 """ 
