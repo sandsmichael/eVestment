@@ -53,8 +53,60 @@ data['SMA3'] = data['returns'].rolling(3).mean()
 data['SMA6'] = data['returns'].rolling(6).mean()
 data['SMA12'] = data['returns'].rolling(12).mean()
 
+import yfinance as yf
+benchmark_index = yf.download('SPY', '2019-12-01', '2022-12-31')
+benchmark_index = benchmark_index['Adj Close'].pct_change().groupby(pd.Grouper(freq='M')).sum().to_frame()
+benchmark_index.columns = ['SPY']
+benchmark_index.index = [i.strftime('%m/%Y') for i in benchmark_index.index]
+benchmark_index.reset_index(drop=True, inplace=True)
+data = data.merge(benchmark_index, left_index=True, right_index = True, how = 'inner')
 
-data['rsi'] = RSI(data['price'].to_numpy(), 6)
+
+benchmark_index = yf.download('QQQ', '2019-12-01', '2022-12-31')
+benchmark_index = benchmark_index['Adj Close'].pct_change().groupby(pd.Grouper(freq='M')).sum().to_frame()
+benchmark_index.columns = ['QQQ']
+benchmark_index.index = [i.strftime('%m/%Y') for i in benchmark_index.index]
+benchmark_index.reset_index(drop=True, inplace=True)
+data = data.merge(benchmark_index, left_index=True, right_index = True, how = 'inner')
+
+
+# import yfinance as yf
+benchmark_index = yf.download('VXX', '2019-12-01', '2022-12-31')
+benchmark_index = benchmark_index['Adj Close'].groupby(pd.Grouper(freq='M')).sum().to_frame()
+benchmark_index.columns = ['VXX']
+benchmark_index.index = [i.strftime('%m/%Y') for i in benchmark_index.index]
+benchmark_index.reset_index(drop=True, inplace=True)
+data = data.merge(benchmark_index, left_index=True, right_index = True, how = 'inner')
+
+import fredapi
+fred = fredapi.Fred(api_key='ae9eac413fee6bc7cbe0747b78d0b32c')
+tbill = fred.get_series('TB3MS', '2019-12-01', '2022-12-31').to_frame().rename(columns={0:'TB3MS'})
+# tbill = tbill['TB3MS'].pct_change()
+tbill.index = [i.strftime('%m/%Y') for i in tbill.index]
+tbill.reset_index(drop=True, inplace=True)
+data = data.merge(tbill, left_index=True, right_index = True, how = 'inner')
+
+tbill = fred.get_series('FEDFUNDS', '2019-12-01', '2022-12-31').to_frame().rename(columns={0:'FEDFUNDS'})
+tbill = tbill['FEDFUNDS'].pct_change()
+tbill.index = [i.strftime('%m/%Y') for i in tbill.index]
+tbill.reset_index(drop=True, inplace=True)
+data = data.merge(tbill, left_index=True, right_index = True, how = 'inner')
+
+
+tbill = fred.get_series('DGS10', '2019-12-01', '2022-12-31').to_frame().rename(columns={0:'DGS10'})
+# tbill = tbill['TB3MS'].pct_change()
+tbill.index = [i.strftime('%m/%Y') for i in tbill.index]
+tbill.reset_index(drop=True, inplace=True)
+data = data.merge(tbill, left_index=True, right_index = True, how = 'inner')
+
+tbill = fred.get_series('DTWEXBGS', '2019-12-01', '2022-12-31').to_frame().rename(columns={0:'DTWEXBGS'})
+tbill = tbill['DTWEXBGS'].pct_change()
+tbill.index = [i.strftime('%m/%Y') for i in tbill.index]
+tbill.reset_index(drop=True, inplace=True)
+data = data.merge(tbill, left_index=True, right_index = True, how = 'inner')
+
+
+# data['rsi'] = RSI(data['price'].to_numpy(), 6)
 
 def compute_bb(close):
     high, mid, low = BBANDS(close, timeperiod=6)
@@ -66,10 +118,10 @@ data = data.merge(compute_bb(data['price']), left_index=True, right_index = True
 def compute_macd(close):
     macd = MACD(close, fastperiod=3, slowperiod=6, signalperiod=3)[0] # 12, 26, 9 is default
     return ((macd - np.mean(macd))/np.std(macd)).to_frame().rename(columns = {0: 'macd'})
-data = data.merge(compute_macd(data['price']), left_index=True, right_index = True, how = 'inner')
+# data = data.merge(compute_macd(data['price']), left_index=True, right_index = True, how = 'inner')
 # print(data.macd.describe(percentiles=[.001, .01, .02, .03, .04, .05, .95, .96, .97, .98, .99, .999]).apply(lambda x: f'{x:,.1f}'))
 
-lags = [1, 3, 6, 12]
+lags = [1, 3, 6]
 percentiles=[.0001, .001, .01]
 percentiles+= [1-p for p in percentiles]
 # data.returns.describe(percentiles=percentiles).iloc[2:].to_frame('percentiles').style.format(lambda x: f'{x:,.2%}')
@@ -85,12 +137,12 @@ for lag in lags:
                                 .sub(1)
                                 )
 # shift lagged returns
-# for t in [1, 2, 3, 4, 5]:
-#     for lag in [1, 3, 6]:
-#         data[f'return_{lag}d_lag{t}'] = (data[f'return_{lag}d'].shift(t * lag))
+for t in [1, 3, 4, 5, 6]:
+    for lag in [1, 3, 6]:
+        data[f'return_{lag}m_lag{t}'] = (data[f'return_{lag}m'].shift(t * lag))
 
 # # Forward returns
-for t in [1, 3, 6, 12]:
+for t in [1, 3, 6]:
     data[f'target_{t}m'] = data[f'return_{t}m'].shift(-t)
 
 # data['year'] = data.index.get_level_values('date').year
@@ -142,7 +194,7 @@ plot_acf(residuals, lags=10, zero=False, ax=axes[1], title='Residual Autocorrela
 axes[1].set_xlabel('Lags')
 sns.despine()
 fig.tight_layout();
-plt.show()
+# plt.show()
 
 
 """ 
@@ -150,10 +202,12 @@ plt.show()
   │ Measure                                                                                                          │
   └──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 """
+preds = preds.mul(100)
+
 fig, axes = plt.subplots(ncols=2, figsize=(14,4))
 results = pd.DataFrame()
 results =  data['returns'].shift(-1).to_frame().merge(preds.to_frame(), left_index = True, right_index = True)
-results[0] = results[0].multiply(100)
+# results[0] = results[0].multiply(100)
 print(results)
 from statsmodels.tools.eval_measures import rmse
 rmse = rmse(data['returns'].shift(-1).dropna(), preds[:-1])
@@ -166,3 +220,16 @@ print('RMSE: ', rmse)
 # print(ypred)
 
 
+def MAPE(Y_actual,Y_Predicted):
+    mape = np.mean(np.abs((Y_actual - Y_Predicted)/Y_actual))*100
+    return mape
+# def mean_absolute_percentage_error(y_true, y_pred):
+#     y_true, y_pred = np.array(y_true), np.array(y_pred)
+#     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+print('MAPE: ', MAPE(data['returns'].shift(-1).dropna(), preds[:-1]))
+
+
+plt.plot(data['returns'].shift(-1).dropna())
+plt.plot(preds[:-1])
+plt.legend(["true", "pred"])
+plt.show()
